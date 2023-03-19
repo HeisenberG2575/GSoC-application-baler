@@ -357,10 +357,11 @@ def compress(model_path, config):
 def decompress(model_path, input_path, model_name):
 
     # Load the data & convert to tensor
+    print(model_path)
     data = data_loader(input_path)
     latent_space_size = len(data[0])
     modelDict = torch.load(str(model_path))
-    number_of_columns = len(modelDict[list(modelDict.keys())[-1]])
+    number_of_columns = modelDict[list(modelDict.keys())[0]].size()[1]
 
 
     # Initialise and load the model correctly.

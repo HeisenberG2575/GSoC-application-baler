@@ -10,15 +10,15 @@ class george_SAE(nn.Module):
         self.device = device
 
         # encoder
-        self.en1 = nn.Linear(n_features, 200, dtype=torch.float64, device=device)
-        self.en2 = nn.Linear(200, 100, dtype=torch.float64, device=device)
-        self.en3 = nn.Linear(100, 50, dtype=torch.float64, device=device)
-        self.en4 = nn.Linear(50, z_dim, dtype=torch.float64, device=device)
+        self.en1 = nn.Linear(n_features, 256, dtype=torch.float64, device=device)
+        self.en2 = nn.Linear(256, 128, dtype=torch.float64, device=device)
+        self.en3 = nn.Linear(128, 64, dtype=torch.float64, device=device)
+        self.en4 = nn.Linear(64, z_dim, dtype=torch.float64, device=device)
         # decoder
-        self.de1 = nn.Linear(z_dim, 50, dtype=torch.float64, device=device)
-        self.de2 = nn.Linear(50, 100, dtype=torch.float64, device=device)
-        self.de3 = nn.Linear(100, 200, dtype=torch.float64, device=device)
-        self.de4 = nn.Linear(200, n_features, dtype=torch.float64, device=device)
+        self.de1 = nn.Linear(z_dim, 64, dtype=torch.float64, device=device)
+        self.de2 = nn.Linear(64, 128, dtype=torch.float64, device=device)
+        self.de3 = nn.Linear(128, 256, dtype=torch.float64, device=device)
+        self.de4 = nn.Linear(256, n_features, dtype=torch.float64, device=device)
 
         self.n_features = n_features
         self.z_dim = z_dim
@@ -42,44 +42,44 @@ class george_SAE(nn.Module):
 
 
 class george_SAE_BN(nn.Module):
-    def __init__(self, n_features, z_dim):
+    def __init__(self, device, n_features, z_dim):
         super(george_SAE_BN, self).__init__()
-
+        self.device = device
         # encoder
         self.enc_nn = nn.Sequential(
-            nn.Linear(n_features, 200, dtype=torch.float64),
+            nn.Linear(n_features, 200, dtype=torch.float64,device=device),
             # nn.Dropout(p=0.5),
             nn.LeakyReLU(),
-            nn.BatchNorm1d(200, dtype=torch.float64),
-            nn.Linear(200, 100, dtype=torch.float64),
+            nn.BatchNorm1d(200, dtype=torch.float64,device=device),
+            nn.Linear(200, 100, dtype=torch.float64,device=device),
             # nn.Dropout(p=0.4),
             nn.LeakyReLU(),
-            nn.BatchNorm1d(100, dtype=torch.float64),
-            nn.Linear(100, 50, dtype=torch.float64),
+            nn.BatchNorm1d(100, dtype=torch.float64,device=device),
+            nn.Linear(100, 50, dtype=torch.float64,device=device),
             # nn.Dropout(p=0.3),
             nn.LeakyReLU(),
-            nn.BatchNorm1d(50, dtype=torch.float64),
-            nn.Linear(50, z_dim, dtype=torch.float64),
+            nn.BatchNorm1d(50, dtype=torch.float64,device=device),
+            nn.Linear(50, z_dim, dtype=torch.float64,device=device),
             # nn.Dropout(p=0.2),
             nn.LeakyReLU(),
-            nn.BatchNorm1d(z_dim, dtype=torch.float64),
+            nn.BatchNorm1d(z_dim, dtype=torch.float64,device=device),
         )
 
         # decoder
         self.dec_nn = nn.Sequential(
-            nn.Linear(z_dim, 50, dtype=torch.float64),
+            nn.Linear(z_dim, 50, dtype=torch.float64,device=device),
             # nn.Dropout(p=0.2),
             nn.LeakyReLU(),
             # nn.BatchNorm1d(50,dtype=torch.float64),
-            nn.Linear(50, 100, dtype=torch.float64),
+            nn.Linear(50, 100, dtype=torch.float64,device=device),
             # nn.Dropout(p=0.3),
             nn.LeakyReLU(),
             # nn.BatchNorm1d(100,dtype=torch.float64),
-            nn.Linear(100, 200, dtype=torch.float64),
+            nn.Linear(100, 200, dtype=torch.float64,device=device),
             # nn.Dropout(p=0.4),
             nn.LeakyReLU(),
             # nn.BatchNorm1d(200,dtype=torch.float64),
-            nn.Linear(200, n_features, dtype=torch.float64),
+            nn.Linear(200, n_features, dtype=torch.float64,device=device),
             # nn.Dropout(p=0.5),
             # nn.BatchNorm1d(n_features,dtype=torch.float64),
             nn.ReLU(),
@@ -102,46 +102,47 @@ class george_SAE_BN(nn.Module):
 
 
 class george_SAE_Dropout_BN(nn.Module):
-    def __init__(self, n_features, z_dim):
+    def __init__(self, device, n_features, z_dim):
         super(george_SAE_Dropout_BN, self).__init__()
-
+        self.device = device
+        print(device)
         # encoder
         self.enc_nn = nn.Sequential(
-            nn.Linear(n_features, 200, dtype=torch.float64),
-            nn.Dropout(p=0.5),
-            nn.LeakyReLU(),
-            # nn.BatchNorm1d(200,dtype=torch.float64),
-            nn.Linear(200, 100, dtype=torch.float64),
-            nn.Dropout(p=0.4),
-            nn.LeakyReLU(),
-            # nn.BatchNorm1d(100,dtype=torch.float64),
-            nn.Linear(100, 50, dtype=torch.float64),
+            nn.Linear(n_features, 200, dtype=torch.float64,device=device),
             nn.Dropout(p=0.3),
             nn.LeakyReLU(),
-            # nn.BatchNorm1d(50,dtype=torch.float64),
-            nn.Linear(50, z_dim, dtype=torch.float64),
+            # nn.BatchNorm1d(200,dtype=torch.float64),
+            nn.Linear(200, 100, dtype=torch.float64,device=device),
+            nn.Dropout(p=0.3),
+            nn.LeakyReLU(),
+            # nn.BatchNorm1d(100,dtype=torch.float64),
+            nn.Linear(100, 50, dtype=torch.float64,device=device),
             nn.Dropout(p=0.2),
+            nn.LeakyReLU(),
+            # nn.BatchNorm1d(50,dtype=torch.float64),
+            nn.Linear(50, z_dim, dtype=torch.float64,device=device),
+            nn.Dropout(p=0.1),
             nn.LeakyReLU(),
             # nn.BatchNorm1d(z_dim,dtype=torch.float64)
         )
 
         # decoder
         self.dec_nn = nn.Sequential(
-            nn.Linear(z_dim, 50, dtype=torch.float64),
+            nn.Linear(z_dim, 50, dtype=torch.float64,device=device),
             # nn.Dropout(p=0.2),
             nn.LeakyReLU(),
-            nn.BatchNorm1d(50, dtype=torch.float64),
-            nn.Linear(50, 100, dtype=torch.float64),
+            nn.BatchNorm1d(50, dtype=torch.float64,device=device),
+            nn.Linear(50, 100, dtype=torch.float64,device=device),
             # nn.Dropout(p=0.3),
             nn.LeakyReLU(),
-            nn.BatchNorm1d(100, dtype=torch.float64),
-            nn.Linear(100, 200, dtype=torch.float64),
+            nn.BatchNorm1d(100, dtype=torch.float64,device=device),
+            nn.Linear(100, 200, dtype=torch.float64,device=device),
             # nn.Dropout(p=0.4),
             nn.LeakyReLU(),
-            nn.BatchNorm1d(200, dtype=torch.float64),
-            nn.Linear(200, n_features, dtype=torch.float64),
+            nn.BatchNorm1d(200, dtype=torch.float64,device=device),
+            nn.Linear(200, n_features, dtype=torch.float64,device=device),
             # nn.Dropout(p=0.5),
-            nn.BatchNorm1d(n_features, dtype=torch.float64),
+            nn.BatchNorm1d(n_features, dtype=torch.float64,device=device),
             nn.ReLU(),
         )
 
@@ -162,38 +163,38 @@ class george_SAE_Dropout_BN(nn.Module):
 
 
 class george_SAE_Dropout(nn.Module):
-    def __init__(self, n_features, z_dim):
+    def __init__(self, device, n_features, z_dim):
         super(george_SAE_Dropout, self).__init__()
-
+        self.device=device
         # encoder
         self.enc_nn = nn.Sequential(
-            nn.Linear(n_features, 200, dtype=torch.float64),
-            nn.Dropout(p=0.5),
-            nn.LeakyReLU(),
-            nn.Linear(200, 100, dtype=torch.float64),
-            nn.Dropout(p=0.4),
-            nn.LeakyReLU(),
-            nn.Linear(100, 50, dtype=torch.float64),
+            nn.Linear(n_features, 200, dtype=torch.float64,device=device),
             nn.Dropout(p=0.3),
             nn.LeakyReLU(),
-            nn.Linear(50, z_dim, dtype=torch.float64),
+            nn.Linear(200, 100, dtype=torch.float64,device=device),
+            nn.Dropout(p=0.3),
+            nn.LeakyReLU(),
+            nn.Linear(100, 50, dtype=torch.float64,device=device),
             nn.Dropout(p=0.2),
+            nn.LeakyReLU(),
+            nn.Linear(50, z_dim, dtype=torch.float64,device=device),
+            nn.Dropout(p=0.1),
             nn.LeakyReLU(),
         )
 
         # decoder
         self.dec_nn = nn.Sequential(
-            nn.Linear(z_dim, 50, dtype=torch.float64),
+            nn.Linear(z_dim, 50, dtype=torch.float64,device=device),
+            nn.Dropout(p=0.1),
+            nn.LeakyReLU(),
+            nn.Linear(50, 100, dtype=torch.float64,device=device),
             nn.Dropout(p=0.2),
             nn.LeakyReLU(),
-            nn.Linear(50, 100, dtype=torch.float64),
+            nn.Linear(100, 200, dtype=torch.float64,device=device),
             nn.Dropout(p=0.3),
             nn.LeakyReLU(),
-            nn.Linear(100, 200, dtype=torch.float64),
-            nn.Dropout(p=0.4),
-            nn.LeakyReLU(),
-            nn.Linear(200, n_features, dtype=torch.float64),
-            nn.Dropout(p=0.5),
+            nn.Linear(200, n_features, dtype=torch.float64,device=device),
+            nn.Dropout(p=0.3),
             nn.ReLU(),
         )
 
@@ -209,7 +210,7 @@ class george_SAE_Dropout(nn.Module):
         return out
 
     def forward(self, x):
-        # z = x.view(batch_size,a,b,c) ? What is this
+        x = self.encode(x)
         return self.decode(x)
 
     def loss(self, model_children, true_data, reconstructed_data, reg_param):
