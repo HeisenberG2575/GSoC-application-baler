@@ -77,22 +77,25 @@ def accuracy(model, dataloader):
 
 
 class EarlyStopping:
-    def __init__(self, patience, min_delta):
+    def __init__(self, patience, min_delta, check_oscillation):
         self.patience = patience  # Nr of times we allow val. loss to not improve before early stopping
         self.min_delta = min_delta  # min(new loss - best loss) for new loss to be considered improvement
         self.counter = 0  # counts nr of times val_loss dosent improve
+        self.losses=[]
         self.best_loss = None
+        self.worst_of_last_5 = None
         self.early_stop = False
 
     def __call__(self, val_loss):
-        if self.best_loss is None:
-            self.best_loss = val_loss
+        self.losses.append(val_loss)
+        self.best_loss = min(self.losses)
+        self.worst_of_last_5 = max(self.losses[-5:])
 
         elif self.best_loss - val_loss > self.min_delta:
             self.best_loss = val_loss
             self.counter = 0  ## Resets if val_loss improves
 
-        elif self.best_loss - val_loss < self.min_delta:
+        elif self.best_loss - val_loss < self.min_delta or self.worst_of_last_5 - self.best_loss < self.min_delta*5 :
             self.counter += 1
 
             print(f"Early stopping counter {self.counter} of {self.patience}")
