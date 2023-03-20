@@ -80,6 +80,7 @@ class configClass:
     batch_size          : int
     save_as_root        : bool
     test_size           : float
+    vae                 : bool
 
 def create_default_config(project_name) -> str:
     return f'''
@@ -324,6 +325,8 @@ def model_saver(model, model_path):
 
 
 def detach(tensor):
+    if type(tensor)==type((1,)):
+        return tensor[0].cpu().detach().numpy()    
     return tensor.cpu().detach().numpy()
 
 

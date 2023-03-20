@@ -30,13 +30,20 @@ def new_loss_func(model, reconstructed_data, true_data, reg_param, val):
         loss = mse_loss
         return loss
 
+def vae_loss(true_data, reconstructed_data, mu, logvar, validate=False):
+    mse = nn.MSELoss()
+    mse_loss = mse(reconstructed_data, true_data)
+    if not validate:
+        kld_loss = torch.mean(-0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(),dim=1),dim=0)
+        return mse_loss + kld_loss, mse_loss, kld_loss
+    else:
+        return mse_loss
 
 def sparse_loss_function_L1(
     model_children, true_data, reconstructed_data, reg_param, validate
 ):
     mse = nn.MSELoss()
     mse_loss = mse(reconstructed_data, true_data)
-
     l1_loss = 0
     values = true_data
     if not validate:
@@ -77,7 +84,7 @@ def accuracy(model, dataloader):
 
 
 class EarlyStopping:
-    def __init__(self, patience, min_delta, check_oscillation):
+    def __init__(self, patience, min_delta):
         self.patience = patience  # Nr of times we allow val. loss to not improve before early stopping
         self.min_delta = min_delta  # min(new loss - best loss) for new loss to be considered improvement
         self.counter = 0  # counts nr of times val_loss dosent improve
@@ -91,7 +98,7 @@ class EarlyStopping:
         self.best_loss = min(self.losses)
         self.worst_of_last_5 = max(self.losses[-5:])
 
-        elif self.best_loss - val_loss > self.min_delta:
+        if self.best_loss - val_loss > self.min_delta:
             self.best_loss = val_loss
             self.counter = 0  ## Resets if val_loss improves
 

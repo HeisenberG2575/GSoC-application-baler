@@ -2,6 +2,64 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+class VarAutoEnc(nn.Module):
+    def __init__(self, device, n_features, z_dim):
+        super(VarAutoEnc, self).__init__()
+        self.device = device
+        self.enc_nn = nn.Sequential(
+            nn.Linear(n_features, 256, dtype=torch.float64,device=device),
+            nn.LeakyReLU(),
+            nn.BatchNorm1d(256, dtype=torch.float64,device=device),
+            nn.Linear(256, 128, dtype=torch.float64,device=device),
+            nn.LeakyReLU(),
+            nn.BatchNorm1d(128, dtype=torch.float64,device=device),
+            nn.Linear(128, 64, dtype=torch.float64,device=device),
+            nn.LeakyReLU(),
+            nn.BatchNorm1d(64, dtype=torch.float64,device=device),
+            # nn.Linear(64, z_dim, dtype=torch.float64,device=device),
+            # nn.LeakyReLU(),
+            # nn.BatchNorm1d(z_dim, dtype=torch.float64,device=device),
+        )
+        self.mu_layer = nn.Linear(64,z_dim,dtype=torch.float64,device=device)
+        self.logvar_layer = nn.Linear(64,z_dim,dtype=torch.float64,device=device)
+        self.dec_nn = nn.Sequential(
+            nn.Linear(z_dim, 64, dtype=torch.float64,device=device),
+            nn.LeakyReLU(),
+            nn.Linear(64, 128, dtype=torch.float64,device=device),
+            nn.LeakyReLU(),
+            nn.Linear(128, 256, dtype=torch.float64,device=device),
+            nn.LeakyReLU(),
+            nn.Linear(256, n_features, dtype=torch.float64,device=device),
+            nn.ReLU(),
+        )
+
+        self.n_features = n_features
+        self.z_dim = z_dim
+
+    def reparameterise(self, mu, logvar):
+        if self.training:
+            std = logvar.mul(0.5).exp_()
+            eps = std.data.new(std.size()).normal_()
+            return eps.mul(std).add_(mu)
+        else:
+            return mu
+
+    def encode(self, x):
+        pre_final = self.enc_nn(x)
+        mu = self.mu_layer(pre_final)
+        logvar = self.logvar_layer(pre_final)
+        return mu, logvar        
+
+    def decode(self, z):
+        out = self.dec_nn(z)
+        return out
+
+    def forward(self, x):
+        mu, logvar = self.encode(x)
+        z = self.reparameterise(mu, logvar)
+        x_hat = self.decode(z)
+        return x_hat, mu, logvar
+
 
 class george_SAE(nn.Module):
     def __init__(self, device, n_features, z_dim, *args, **kwargs):

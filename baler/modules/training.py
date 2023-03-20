@@ -12,7 +12,7 @@ import random
 import numpy as np
 
 
-def fit(model, train_dl, train_ds, model_children, regular_param, optimizer, RHO, l1):
+def fit(model, train_dl, train_ds, model_children, regular_param, optimizer, RHO, l1, vae=False):
     print("### Beginning Training")
 
     model.train()
@@ -26,15 +26,20 @@ def fit(model, train_dl, train_ds, model_children, regular_param, optimizer, RHO
         counter += 1
         inputs = inputs.to(model.device)
         optimizer.zero_grad()
-        reconstructions = model(inputs)
-        loss, mse_loss, l1_loss = utils.sparse_loss_function_L1(
-            model_children=model_children,
-            true_data=inputs,
-            reconstructed_data=reconstructions,
-            reg_param=regular_param,
-            validate=False,
-        )
-
+        if vae:
+            reconstructions, mu, logvar = model(inputs)
+        else:
+            reconstructions = model(inputs)
+        if vae:
+            loss, mse_loss, kld_loss = utils.vae_loss(inputs,reconstructions,mu,logvar)
+        else:
+            loss, mse_loss, l1_loss = utils.sparse_loss_function_L1(
+                model_children=model_children,
+                true_data=inputs,
+                reconstructed_data=reconstructions,
+                reg_param=regular_param,
+                validate=False,
+            )
         loss.backward()
         optimizer.step()
 
@@ -42,10 +47,12 @@ def fit(model, train_dl, train_ds, model_children, regular_param, optimizer, RHO
 
     epoch_loss = running_loss / counter
     print(f"# Finished. Training Loss: {loss:.6f}")
+    if vae:
+        return epoch_loss, mse_loss, kld_loss    
     return epoch_loss, mse_loss, l1_loss
 
 
-def validate(model, test_dl, test_ds, model_children, reg_param):
+def validate(model, test_dl, test_ds, model_children, reg_param, vae):
     print("### Beginning Validating")
 
     model.eval()
@@ -58,7 +65,10 @@ def validate(model, test_dl, test_ds, model_children, reg_param):
         ):
             counter += 1
             inputs = inputs.to(model.device)
-            reconstructions = model(inputs)
+            if vae:
+                reconstructions,mu,logvar = model(inputs)
+            else:
+                reconstructions = model(inputs)
             loss = utils.sparse_loss_function_L1(
                 model_children=model_children,
                 true_data=inputs,
@@ -93,6 +103,7 @@ def train(model, variables, train_data, test_data, parent_path, config):
     l1 = config.l1
     epochs = config.epochs
     latent_space_size = config.latent_space_size
+    vae = config.vae
 
     model_children = list(model.children())
 
@@ -143,6 +154,7 @@ def train(model, variables, train_data, test_data, parent_path, config):
             RHO=RHO,
             regular_param=reg_param,
             l1=l1,
+            vae=vae,
         )
 
         train_loss.append(train_epoch_loss)
@@ -153,6 +165,7 @@ def train(model, variables, train_data, test_data, parent_path, config):
             test_ds=valid_ds,
             model_children=model_children,
             reg_param=reg_param,
+            vae=vae,
         )
         val_loss.append(val_epoch_loss)
         if config.lr_scheduler:
