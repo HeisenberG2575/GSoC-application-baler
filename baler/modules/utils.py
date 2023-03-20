@@ -94,21 +94,27 @@ class EarlyStopping:
         self.early_stop = False
 
     def __call__(self, val_loss):
-        self.losses.append(val_loss)
-        self.best_loss = min(self.losses)
-        self.worst_of_last_5 = max(self.losses[-5:])
-
-        if self.best_loss - val_loss > self.min_delta:
+        if self.best_loss is None :
             self.best_loss = val_loss
-            self.counter = 0  ## Resets if val_loss improves
+            self.losses.append(val_loss)
+        else:
+            self.best_loss = min(self.losses)
+            if len(self.losses)>5:
+                self.worst_of_last_5 = max(self.losses[-5:])
+            else:
+                self.worst_of_last_5 = self.best_loss + self.min_delta*6
+            self.losses.append(val_loss)
+            if self.best_loss - val_loss > self.min_delta:
+                self.best_loss = val_loss
+                self.counter = 0  ## Resets if val_loss improves
 
-        elif self.best_loss - val_loss < self.min_delta or self.worst_of_last_5 - self.best_loss < self.min_delta*5 :
-            self.counter += 1
+            elif self.best_loss - val_loss < self.min_delta or self.worst_of_last_5 - self.best_loss < self.min_delta*5 :
+                self.counter += 1
 
-            print(f"Early stopping counter {self.counter} of {self.patience}")
-            if self.counter >= self.patience:
-                print("Early Stopping")
-                self.early_stop = True
+                print(f"Early stopping counter {self.counter} of {self.patience}")
+                if self.counter >= self.patience:
+                    print("Early Stopping")
+                    self.early_stop = True
 
 
 class LRScheduler:
